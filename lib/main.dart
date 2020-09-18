@@ -7,16 +7,21 @@ class BytebankApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      home: TransferForm(),
+      home: TransferList(),
     );
   }
 }
 
-// Create Transfer Form
-class TransferForm extends StatelessWidget {
-  // Create the controllers
+// 1 - Convert TransferForm to a statefull widget
+class TransferForm extends StatefulWidget {
+  @override
+  _TransferFormState createState() => _TransferFormState();
+}
+
+class _TransferFormState extends State<TransferForm> {
   final TextEditingController _accountNumberFieldController =
       TextEditingController();
+
   final TextEditingController _valueFieldController = TextEditingController();
 
   @override
@@ -24,76 +29,128 @@ class TransferForm extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: Text('Creating Transfer'),
-      ),
-      body: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: TextField(
-              // put the controllers in the TextFields
-              controller: _accountNumberFieldController,
-              style: TextStyle(fontSize: 24.0),
-              decoration: InputDecoration(
-                labelText: 'Account number',
-                hintText: '0000',
-              ),
-              keyboardType: TextInputType.number,
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: TextField(
-              controller: _valueFieldController,
-              style: TextStyle(fontSize: 24.0),
-              decoration: InputDecoration(
-                icon: Icon(Icons.monetization_on),
-                labelText: 'Value',
-                hintText: '0.00',
-              ),
-              keyboardType: TextInputType.number,
-            ),
-          ),
-          RaisedButton(
-            child: Text('Confirm'),
-            onPressed: () {
-              // Parse the values!
-              final int accountNumber =
-                  int.tryParse(_accountNumberFieldController.text);
-              final double value = double.tryParse(_valueFieldController.text);
 
-              if (accountNumber != null && value != null) {
-                // Create a transfer from the values
-                final transferCreated = Transfer(value, accountNumber);
-                // Print the transfer
-                debugPrint('$transferCreated');
-              } else {
-                print('Invalid values...');
-              }
-            },
-          )
-        ],
+      ),
+
+      // 2 - Wrap the column in a SingleChildScrollView
+      body: SingleChildScrollView(
+        child: Column(
+          children: [
+            Editor(
+              controller: _accountNumberFieldController,
+              label: 'Account Number',
+              hint: '0000',
+            ),
+            // Change the constructor calling methot
+            Editor(
+              controller: _valueFieldController,
+              label: 'Value',
+              hint: '0.00',
+              icon: Icons.monetization_on,
+            ),
+            RaisedButton(
+              child: Text('Confirm'),
+              onPressed: () => _createTransfer(context),
+            )
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _createTransfer(BuildContext context) {
+    // Parse the values!
+    final int accountNumber = int.tryParse(_accountNumberFieldController.text);
+    final double value = double.tryParse(_valueFieldController.text);
+
+    if (accountNumber != null && value != null) {
+      final createdTransfer = Transfer(value, accountNumber);
+      Navigator.pop(context, createdTransfer);
+    } else {
+      print('Invalid values...');
+    }
+  }
+
+  // 2 - Use the dispose lifecycle hook to dispose the controllers
+  @override
+  void dispose() {
+    _accountNumberFieldController.dispose();
+    _valueFieldController.dispose();
+    super.dispose();
+  }
+}
+
+class Editor extends StatelessWidget {
+  final String hint;
+  final String label;
+  final TextEditingController controller;
+  final IconData icon;
+
+  // Change the constructor to use named optional parameters
+  const Editor({this.controller, this.label, this.hint, this.icon});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.all(16.0),
+      child: TextField(
+        controller: controller,
+        style: TextStyle(fontSize: 24.0),
+        decoration: InputDecoration(
+          icon: icon != null ? Icon(icon) : null,
+          labelText: label,
+          hintText: hint,
+        ),
+        keyboardType: TextInputType.number,
       ),
     );
   }
 }
 
-class TransferList extends StatelessWidget {
+// 1 - Create  the TransferList statefull widget - stful
+class TransferList extends StatefulWidget {
+  final List<Transfer> _transfers = List();
+
+  @override
+  _TransferListState createState() => _TransferListState();
+}
+
+class _TransferListState extends State<TransferList> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: Text('Transfers'),
       ),
-      // Extract the transfer list widget
-      body: Column(children: [
-        // Use the transfer class
-        TransferItem(Transfer(100.0, 1001)),
-        TransferItem(Transfer(200.0, 2002)),
-        TransferItem(Transfer(300.0, 3002)),
-      ]),
+      body: ListView.builder(
+        itemCount: widget._transfers.length,
+        itemBuilder: (context, index) {
+          final transfer = widget._transfers[index];
+          return TransferItem(transfer);
+        },
+      ),
       floatingActionButton: FloatingActionButton(
         child: Icon(Icons.add),
-        onPressed: null,
+        onPressed: () {
+          final Future future = Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => TransferForm(),
+            ),
+          );
+
+          future.then((transferReceived) {
+            debugPrint('arrived at then of the future $transferReceived');
+
+            // 1 - Check for null value from the future
+            if (transferReceived != null) {
+              debugPrint('$transferReceived');
+              setState(() {
+                widget._transfers.add(transferReceived);
+              });
+            }
+          });
+        },
       ),
     );
   }
