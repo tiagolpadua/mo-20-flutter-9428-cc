@@ -19,39 +19,68 @@ class TransferForm extends StatefulWidget {
 }
 
 class _TransferFormState extends State<TransferForm> {
+  bool _isValueFieldValid = false;
+  bool _isAccountFieldValid = false;
+  bool _isValueFieldDirty = false;
+  bool _isAccountFieldDirty = false;
+
   final TextEditingController _accountNumberFieldController =
-      TextEditingController();
+  TextEditingController();
 
   final TextEditingController _valueFieldController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    _accountNumberFieldController.addListener(() {
+      _validateFields();
+    });
+    _valueFieldController.addListener(() {
+      _validateFields();
+    });
+  }
+
+  bool _isFormValid() {
+    return _isValueFieldValid && _isAccountFieldValid;
+  }
+
+  _validateFields() {
+    setState(() {
+      _isAccountFieldValid =
+          int.tryParse(_accountNumberFieldController.text) != null;
+      _isValueFieldValid = double.tryParse(_valueFieldController.text) != null;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: Text('Creating Transfer'),
-
       ),
-
-      // 2 - Wrap the column in a SingleChildScrollView
       body: SingleChildScrollView(
         child: Column(
-          children: [
+          children: <Widget>[
             Editor(
               controller: _accountNumberFieldController,
-              label: 'Account Number',
+              label: 'Account number',
               hint: '0000',
+              autofocus: true,
+              onChanged: (value)  => _isAccountFieldDirty = true,
+              hasError: _isAccountFieldDirty && !_isAccountFieldValid,
             ),
-            // Change the constructor calling methot
             Editor(
               controller: _valueFieldController,
               label: 'Value',
               hint: '0.00',
               icon: Icons.monetization_on,
+              onChanged: (value)  => _isValueFieldDirty = true,
+              hasError: _isValueFieldDirty && !_isValueFieldValid,
             ),
             RaisedButton(
               child: Text('Confirm'),
-              onPressed: () => _createTransfer(context),
-            )
+              onPressed: _isFormValid() ? () => _createTransfer(context) : null,
+            ),
           ],
         ),
       ),
@@ -59,21 +88,19 @@ class _TransferFormState extends State<TransferForm> {
   }
 
   void _createTransfer(BuildContext context) {
-    // Parse the values!
     final int accountNumber = int.tryParse(_accountNumberFieldController.text);
     final double value = double.tryParse(_valueFieldController.text);
 
     if (accountNumber != null && value != null) {
-      final createdTransfer = Transfer(value, accountNumber);
-      Navigator.pop(context, createdTransfer);
-    } else {
-      print('Invalid values...');
+      final transferCreated = Transfer(value, accountNumber);
+      debugPrint('$transferCreated');
+      Navigator.pop(context, transferCreated);
     }
   }
 
-  // 2 - Use the dispose lifecycle hook to dispose the controllers
   @override
   void dispose() {
+    debugPrint('dispose called from TransferForm');
     _accountNumberFieldController.dispose();
     _valueFieldController.dispose();
     super.dispose();
@@ -81,13 +108,23 @@ class _TransferFormState extends State<TransferForm> {
 }
 
 class Editor extends StatelessWidget {
-  final String hint;
-  final String label;
   final TextEditingController controller;
+  final String label;
+  final String hint;
   final IconData icon;
+  final bool autofocus;
+  final bool hasError;
+  final void Function(String) onChanged;
 
-  // Change the constructor to use named optional parameters
-  const Editor({this.controller, this.label, this.hint, this.icon});
+  Editor({
+    @required this.controller,
+    @required this.label,
+    @required this.hint,
+    this.icon,
+    this.onChanged,
+    this.autofocus = false,
+    this.hasError = false,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -96,18 +133,23 @@ class Editor extends StatelessWidget {
       child: TextField(
         controller: controller,
         style: TextStyle(fontSize: 24.0),
+        onChanged: onChanged,
         decoration: InputDecoration(
-          icon: icon != null ? Icon(icon) : null,
+          icon: icon != null ? Icon(this.icon) : null,
           labelText: label,
           hintText: hint,
+          focusedBorder: new OutlineInputBorder(
+            borderSide:
+            new BorderSide(color: hasError ? Colors.red : Colors.teal),
+          ),
         ),
         keyboardType: TextInputType.number,
+        autofocus: autofocus,
       ),
     );
   }
 }
 
-// 1 - Create  the TransferList statefull widget - stful
 class TransferList extends StatefulWidget {
   final List<Transfer> _transfers = List();
 
