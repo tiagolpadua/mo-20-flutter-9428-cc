@@ -1,3 +1,4 @@
+import 'package:bytebank/database/app_database.dart';
 import 'package:bytebank/models/contact.dart';
 import 'package:flutter/material.dart';
 
@@ -47,7 +48,7 @@ class _ContactFormState extends State<ContactForm> {
               child: SizedBox(
                 width: double.maxFinite,
                 // Adjust the "create button behavior"
-                child: CreateButton(
+                child: _CreateButton(
                   _nameController,
                   _accountNumberController,
                 ),
@@ -67,8 +68,8 @@ class _ContactFormState extends State<ContactForm> {
   }
 }
 
-class CreateButton extends StatelessWidget {
-  CreateButton(this.nameController, this.accountNumberController);
+class _CreateButton extends StatelessWidget {
+  _CreateButton(this.nameController, this.accountNumberController);
 
   final TextEditingController nameController;
   final TextEditingController accountNumberController;
@@ -81,8 +82,9 @@ class CreateButton extends StatelessWidget {
         final String name = nameController.text.trim();
         final int accountNumber = int.tryParse(accountNumberController.text);
         if (name != null && name.length > 0 && accountNumber != null) {
-          final Contact newContact = Contact(name, accountNumber);
-          Navigator.pop(context, newContact);
+          final Contact newContact = Contact(0, name, accountNumber);
+          // 3 - Save the contact before navigating
+          save(newContact).then((value) => Navigator.pop(context));
         } else {
           final snackBar = SnackBar(
             content: Text('Ivalid Values'),

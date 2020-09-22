@@ -39,7 +39,6 @@ class Dashboard extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // 3 - Adjust the icon and text styles
                       Icon(
                         Icons.people,
                         color: Colors.white,
