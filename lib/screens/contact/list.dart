@@ -1,40 +1,55 @@
-import 'package:bytebank/database/app_database.dart';
+import 'package:bytebank/database/dao/contact_dao.dart';
 import 'package:bytebank/models/contact.dart';
 import 'package:bytebank/screens/contact/form.dart';
 import 'package:flutter/material.dart';
 
-class ContactsList extends StatelessWidget {
+class ContactsList extends StatefulWidget {
+  @override
+  _ContactsListState createState() => _ContactsListState();
+}
+
+class _ContactsListState extends State<ContactsList> {
+  final ContactDao _dao = ContactDao();
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: Text(
-          'Contacts',
+          'Transfer',
         ),
       ),
       body: FutureBuilder<List<Contact>>(
-        future: Future.delayed(Duration(seconds: 1)).then((value) => findAll()),
+        future: _dao.findAll(),
         builder: (context, snapshot) {
-          final List<Contact> contacts = snapshot.data;
-          if (snapshot.data != null) {
-            return ListView.builder(
-              itemCount: contacts.length,
-              itemBuilder: (context, index) {
-                final Contact contact = contacts[index];
-                return _ContactItem(contact);
-              },
-            );
+          switch (snapshot.connectionState) {
+            case ConnectionState.none:
+              break;
+            case ConnectionState.waiting:
+              return Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [CircularProgressIndicator(), Text('Loading...')],
+                ),
+              );
+              break;
+            case ConnectionState.active:
+              break;
+            case ConnectionState.done:
+              final List<Contact> contacts = snapshot.data;
+              if (snapshot.data != null) {
+                return ListView.builder(
+                  itemCount: contacts.length,
+                  itemBuilder: (context, index) {
+                    final Contact contact = contacts[index];
+                    return _ContactItem(contact);
+                  },
+                );
+              }
+              break;
           }
-          return Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                CircularProgressIndicator(),
-                Text('Loading...')
-              ],
-            ),
-          );
+          return Text('Unkown error');
         },
       ),
       floatingActionButton: FloatingActionButton(
@@ -43,7 +58,9 @@ class ContactsList extends StatelessWidget {
               .push(MaterialPageRoute(
                 builder: (context) => ContactForm(),
               ))
-              .then((newContact) => print('contact received: ${newContact}'));
+              // 2 - Convert to a statefull widget
+              // 3 - Call setState
+              .then((newContact) => setState(() {}));
         },
         child: Icon(Icons.add),
       ),

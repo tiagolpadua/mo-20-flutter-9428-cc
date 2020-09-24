@@ -1,4 +1,4 @@
-import 'package:bytebank/database/app_database.dart';
+import 'package:bytebank/database/dao/contact_dao.dart';
 import 'package:bytebank/models/contact.dart';
 import 'package:flutter/material.dart';
 
@@ -69,6 +69,8 @@ class _ContactFormState extends State<ContactForm> {
 }
 
 class _CreateButton extends StatelessWidget {
+  final ContactDao _dao = ContactDao();
+
   _CreateButton(this.nameController, this.accountNumberController);
 
   final TextEditingController nameController;
@@ -83,8 +85,7 @@ class _CreateButton extends StatelessWidget {
         final int accountNumber = int.tryParse(accountNumberController.text);
         if (name != null && name.length > 0 && accountNumber != null) {
           final Contact newContact = Contact(0, name, accountNumber);
-          // 3 - Save the contact before navigating
-          save(newContact).then((value) => Navigator.pop(context));
+          _dao.save(newContact).then((value) => Navigator.pop(context));
         } else {
           final snackBar = SnackBar(
             content: Text('Ivalid Values'),

@@ -14,7 +14,7 @@ class _TransferListState extends State<TransferList> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Transfers'),
+        title: Text('Transactions'),
       ),
       body: ListView.builder(
         itemCount: widget._transfers.length,
@@ -23,29 +23,29 @@ class _TransferListState extends State<TransferList> {
           return TransferItem(transfer);
         },
       ),
-      floatingActionButton: FloatingActionButton(
-        child: Icon(Icons.add),
-        onPressed: () {
-          final Future future = Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => TransferForm(),
-            ),
-          );
-
-          future.then((transferReceived) {
-            debugPrint('arrived at then of the future $transferReceived');
-
-            // 1 - Check for null value from the future
-            if (transferReceived != null) {
-              debugPrint('$transferReceived');
-              setState(() {
-                widget._transfers.add(transferReceived);
-              });
-            }
-          });
-        },
-      ),
+// 3 - Remove the floating action button
+//      floatingActionButton: FloatingActionButton(
+//        child: Icon(Icons.add),
+//        onPressed: () {
+//          final Future future = Navigator.push(
+//            context,
+//            MaterialPageRoute(
+//              builder: (context) => TransferForm(),
+//            ),
+//          );
+//
+//          future.then((transferReceived) {
+//            debugPrint('arrived at then of the future $transferReceived');
+//
+//            if (transferReceived != null) {
+//              debugPrint('$transferReceived');
+//              setState(() {
+//                widget._transfers.add(transferReceived);
+//              });
+//            }
+//          });
+//        },
+//      ),
     );
   }
 }
