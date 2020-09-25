@@ -1,68 +1,76 @@
+import 'package:bytebank/components/centered_message.dart';
+import 'package:bytebank/components/progress.dart';
+import 'package:bytebank/http/http.dart';
+import 'package:bytebank/models/transaction.dart';
 import 'package:bytebank/models/transfer.dart';
-import 'package:bytebank/screens/transfer/form.dart';
 import 'package:flutter/material.dart';
 
 class TransferList extends StatefulWidget {
-  final List<Transfer> _transfers = List();
-
   @override
   _TransferListState createState() => _TransferListState();
 }
 
+// Adjust TransferList to show the transactions
 class _TransferListState extends State<TransferList> {
   @override
   Widget build(BuildContext context) {
+    findAll();
     return Scaffold(
       appBar: AppBar(
         title: Text('Transactions'),
       ),
-      body: ListView.builder(
-        itemCount: widget._transfers.length,
-        itemBuilder: (context, index) {
-          final transfer = widget._transfers[index];
-          return TransferItem(transfer);
+      body: FutureBuilder<List<Transaction>>(
+        future: Future.delayed(Duration(seconds: 1)).then((value) => findAll()),
+        builder: (context, snapshot) {
+          switch (snapshot.connectionState) {
+            case ConnectionState.none:
+              break;
+            case ConnectionState.waiting:
+              return Progress();
+              break;
+            case ConnectionState.active:
+              break;
+            case ConnectionState.done:
+              if(snapshot.hasData) {
+                final List<Transaction> transactions = snapshot.data;
+                if(transactions.isNotEmpty) {
+                  return ListView.builder(
+                    itemCount: transactions.length,
+                    itemBuilder: (context, index) {
+                      final transaction = transactions[index];
+                      return TransactionItem(transaction);
+                    },
+                  );
+                } else {
+                  // 2 - return CenteredMessage
+                  return CenteredMessage(
+                      'No transactions found',
+                      icon: Icons.warning
+                  );
+                }
+              }
+              break;
+          }
+          return CenteredMessage('Unkown error');
         },
       ),
-// 3 - Remove the floating action button
-//      floatingActionButton: FloatingActionButton(
-//        child: Icon(Icons.add),
-//        onPressed: () {
-//          final Future future = Navigator.push(
-//            context,
-//            MaterialPageRoute(
-//              builder: (context) => TransferForm(),
-//            ),
-//          );
-//
-//          future.then((transferReceived) {
-//            debugPrint('arrived at then of the future $transferReceived');
-//
-//            if (transferReceived != null) {
-//              debugPrint('$transferReceived');
-//              setState(() {
-//                widget._transfers.add(transferReceived);
-//              });
-//            }
-//          });
-//        },
-//      ),
     );
   }
 }
 
-class TransferItem extends StatelessWidget {
+class TransactionItem extends StatelessWidget {
   // Create the transfer propety
-  final Transfer _transfer;
+  final Transaction _transaction;
 
-  TransferItem(this._transfer);
+  TransactionItem(this._transaction);
 
   @override
   Widget build(BuildContext context) {
     return Card(
       child: ListTile(
         leading: Icon(Icons.monetization_on),
-        title: Text(_transfer.value.toString()),
-        subtitle: Text(_transfer.accountNumber.toString()),
+        title: Text(_transaction.value.toString()),
+        subtitle: Text(_transaction.contact.accountNumber.toString()),
       ),
     );
   }

@@ -80,12 +80,13 @@ class _CreateButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return RaisedButton(
       child: Text('Create'),
-      onPressed: () {
+      onPressed: () async {
         final String name = nameController.text.trim();
         final int accountNumber = int.tryParse(accountNumberController.text);
         if (name != null && name.length > 0 && accountNumber != null) {
           final Contact newContact = Contact(0, name, accountNumber);
-          _dao.save(newContact).then((value) => Navigator.pop(context));
+          await _dao.save(newContact);
+          Navigator.pop(context);
         } else {
           final snackBar = SnackBar(
             content: Text('Ivalid Values'),
